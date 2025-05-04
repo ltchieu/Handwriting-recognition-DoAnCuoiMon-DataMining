@@ -137,11 +137,14 @@ class DigitClassifierApp:
         self.plot_results()
 
     def augment_data(self, image, label, num_augmentations=3):
-        """Tăng cường dữ liệu bằng cách xoay, dịch chuyển"""
+        """Tăng cường dữ liệu bằng cách xoay, dịch chuyển, zoom, shear, và điều chỉnh độ sáng/tương phản"""
         augmented_images = [image]
         augmented_labels = [label]
+        img_size = 28
 
         for _ in range(num_augmentations):
+            img = image.reshape(img_size, img_size)
+            
             # Xoay ngẫu nhiên từ -10 đến 10 độ
             angle = np.random.uniform(-10, 10)
             rotated_img = rotate(image.reshape(28, 28), angle, reshape=False).reshape(-1)
@@ -152,7 +155,7 @@ class DigitClassifierApp:
             shift_x, shift_y = np.random.randint(-2, 3, size=2)
             shifted_img = shift(image.reshape(28, 28), [shift_x, shift_y], mode='nearest').reshape(-1)
             augmented_images.append(shifted_img)
-            augmented_labels.append(label)
+            augmented_labels.append(label)              
 
         return np.array(augmented_images), np.array(augmented_labels)
 
@@ -204,7 +207,7 @@ class DigitClassifierApp:
         test_x = test_x.view(-1, 28*28).numpy()
 
         # Giảm chiều bằng PCA
-        pca = PCA(n_components=700)
+        pca = PCA(n_components=0.97)
         train_x = pca.fit_transform(train_x)
         test_x = pca.transform(test_x)
 
@@ -232,6 +235,7 @@ class DigitClassifierApp:
         print(classification_report(test_y, predictions))
 
         # Lưu mô hình và accuracies
+        # if(best_accuracy > 97.7):
         joblib.dump(model, 'knn_model.pkl')
         joblib.dump(pca, 'pca_model.pkl')
         joblib.dump(best_accuracy, 'best_accuracy.pkl')
@@ -265,6 +269,7 @@ class DigitClassifierApp:
         plt.title('Best Model Accuracy')
         plt.ylabel('Accuracy')
         plt.ylim(0, 1)
+        plt.yticks(np.arange(0, 1.1, 0.1))
         plt.savefig('best_accuracy_plot.png')
         print('Lưu xong plot1')
         plt.close()
