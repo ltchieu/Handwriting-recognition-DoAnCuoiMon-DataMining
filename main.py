@@ -137,7 +137,7 @@ class DigitClassifierApp:
         self.plot_results()
 
     def augment_data(self, image, label, num_augmentations=3):
-        """Tăng cường dữ liệu bằng cách xoay, dịch chuyển, zoom, shear, và điều chỉnh độ sáng/tương phản"""
+        """Tăng cường dữ liệu bằng cách xoay, dịch chuyển"""
         augmented_images = [image]
         augmented_labels = [label]
         img_size = 28
@@ -396,13 +396,18 @@ class DigitClassifierApp:
                 return
 
             img_flat, img_processed = self.preprocess_image(img)
-            prediction, prob_text = self.predict_with_prob(img_flat)
+            prediction, prob_text,probs = self.predict_with_prob(img_flat)
 
             self.result_label.config(text=f"Result: {prediction}")
             self.prob_label.config(text=f"Probabilities: {prob_text}")
+            
+            confidence = np.max(probs)
 
-            self.image = cv2.resize(img_processed, (200, 200), interpolation=cv2.INTER_AREA)
-            self.display_image_on_canvas(self.image)
+            if(confidence < 0.6):
+                self.result_label.config(text="Kết quả: Không phải chữ số", fg="red", font=("Helvetica", 16, "bold"))
+            else:
+                self.image = cv2.resize(img_processed, (200, 200), interpolation=cv2.INTER_AREA)
+                self.display_image_on_canvas(self.image)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to process image: {str(e)}")
@@ -416,7 +421,7 @@ class DigitClassifierApp:
         self.result_label.config(text=f"Result: {prediction}")
         self.prob_label.config(text=f"Probabilities: {prob_text}")
         
-        if(confidence < 0.77):
+        if(confidence < 0.6):
             self.result_label.config(text="Kết quả: Không phải chữ số", fg="red", font=("Helvetica", 16, "bold"))
         else:
             self.image = cv2.resize(img_processed, (200, 200), interpolation=cv2.INTER_AREA)
