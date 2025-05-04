@@ -242,8 +242,24 @@ class DigitClassifierApp:
 
     def plot_results(self):
         """Vẽ và lưu các biểu đồ sau khi huấn luyện mô hình"""
+        
+        plot_files = [
+            'best_accuracy_plot.png',
+            'knn_model_plot.png',
+            'pca_model_plot.png',
+            'confusion_matrix_plot.png',
+            'model_evaluation_plot.png'
+        ]
+        
+        # Kiểm tra xem tất cả các biểu đồ đã tồn tại chưa
+        all_plots_exist = all(os.path.exists(plot_file) for plot_file in plot_files)
+        
+        if all_plots_exist:
+            print("All plots already exist, skipping plot generation.")
+            return
+        
         # Dữ liệu đã có sẵn từ self.model, self.best_accuracy, self.pca
-       # --- Plot 1: Best Accuracy ---
+        # --- Plot 1: Best Accuracy ---
         plt.figure(figsize=(6, 4))
         plt.bar(['Best Accuracy'], [self.best_accuracy], color='blue')
         plt.title('Best Model Accuracy')
@@ -361,7 +377,7 @@ class DigitClassifierApp:
         prediction = self.model.predict(img_flat)[0]
         probs = self.model.predict_proba(img_flat)[0]
         prob_text = ", ".join([f"{i}: {prob*100:.1f}%" for i, prob in enumerate(probs)])
-        return prediction, prob_text
+        return prediction, prob_text, probs
 
     def import_image(self):
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp")])
@@ -388,13 +404,18 @@ class DigitClassifierApp:
 
     def predict(self):
         img_flat, img_processed = self.preprocess_image(self.image)
-        prediction, prob_text = self.predict_with_prob(img_flat)
-
+        prediction, prob_text, probs = self.predict_with_prob(img_flat)
+        confidence = np.max(probs)
+        
+        
         self.result_label.config(text=f"Result: {prediction}")
         self.prob_label.config(text=f"Probabilities: {prob_text}")
-
-        self.image = cv2.resize(img_processed, (200, 200), interpolation=cv2.INTER_AREA)
-        self.display_image_on_canvas(self.image)
+        
+        if(confidence < 0.77):
+            self.result_label.config(text="Kết quả: Không phải chữ số", fg="red", font=("Helvetica", 16, "bold"))
+        else:
+            self.image = cv2.resize(img_processed, (200, 200), interpolation=cv2.INTER_AREA)
+            self.display_image_on_canvas(self.image)
 
 if __name__ == "__main__":
     root = tk.Tk()
